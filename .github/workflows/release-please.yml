@@ -1,7 +1,12 @@
 on:
   push:
-    branches:
-      - main
+    tags:
+      - '*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 name: release-please
 jobs:
   check:
@@ -15,7 +20,7 @@ jobs:
         with:
           node-version: 18
 
-      - uses: pnpm/action-setup@v2.2.4
+      - uses: pnpm/action-setup@v4.0.0
         name: Install pnpm
         id: pnpm-install
         with:
@@ -42,52 +47,31 @@ jobs:
       - name: Build
         run: pnpm build
 
-  release-please:
-    outputs:
-      release_major: ${{ steps.release.outputs.major }}
-      release_minor: ${{ steps.release.outputs.minor }}
-      release_patch: ${{ steps.release.outputs.patch }}
-      release_created: ${{ steps.release.outputs.release_created }}
-    needs: check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Release
-        uses: google-github-actions/release-please-action@v3
-        id: release
-        with:
-          release-type: node
-          command: manifest
-
   build-and-push:
-    needs: release-please
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        if: ${{ needs.release-please.outputs.release_created }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-        if: ${{ needs.release-please.outputs.release_created }}
 
       - name: Set up Docker Build
         uses: docker/setup-buildx-action@v2
-        if: ${{ needs.release-please.outputs.release_created }}
 
       - name: Login to Github Packages
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ needs.release-please.outputs.release_created }}
+          password: ${{ secrets.GH_TOKEN }}
 
-      - name: Login to Docker hub
-        uses: docker/login-action@v2
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-        if: ${{ needs.release-please.outputs.release_created }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Cache Docker layers
         uses: actions/cache@v3
@@ -96,30 +80,21 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-        if: ${{ needs.release-please.outputs.release_created }}
 
       - name: Build
         uses: docker/build-push-action@v4
         with:
           context: .
           file: docker/Dockerfile
-          push: ${{ needs.release-please.outputs.release_created }}
+          push: true
           platforms: linux/amd64,linux/arm64
+          provenance: false
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/kaizoku:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/kaizoku:v${{ needs.release-please.outputs.release_major }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/kaizoku:v${{ needs.release-please.outputs.release_major }}.${{ needs.release-please.outputs.release_minor }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/kaizoku:v${{ needs.release-please.outputs.release_major }}.${{ needs.release-please.outputs.release_minor }}.${{ needs.release-please.outputs.release_patch }}
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:v${{ needs.release-please.outputs.release_major }}
-            ghcr.io/${{ github.repository }}:v${{ needs.release-please.outputs.release_major }}.${{ needs.release-please.outputs.release_minor }}
-            ghcr.io/${{ github.repository }}:v${{ needs.release-please.outputs.release_major }}.${{ needs.release-please.outputs.release_minor }}.${{ needs.release-please.outputs.release_patch }}
-        if: ${{ needs.release-please.outputs.release_created }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-        if: ${{ needs.release-please.outputs.release_created }}
