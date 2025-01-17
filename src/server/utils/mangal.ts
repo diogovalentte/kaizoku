@@ -153,13 +153,7 @@ export const bindTitleToAnilistId = async (title: string, anilistId: string) => 
 
 export const updateExistingMangaMetadata = async (libraryPath: string, title: string) => {
   try {
-    const { escapedCommand } = await execa('mangal', [
-      'inline',
-      'anilist',
-      'update',
-      '--path',
-      getMangaPath(libraryPath, title),
-    ]);
+    const { escapedCommand } = await execa('mangal', ['inline', 'update', '--path', getMangaPath(libraryPath, title)]);
     logger.info(`Updated existing manga metadata: ${escapedCommand}`);
   } catch (err) {
     logger.error(`Failed to update existing manga metadata. err: ${err}`);
@@ -168,15 +162,7 @@ export const updateExistingMangaMetadata = async (libraryPath: string, title: st
 
 export const search = async (source: string, keyword: string): Promise<IOutput> => {
   try {
-    const { stdout, escapedCommand } = await execa('mangal', [
-      'inline',
-      '--source',
-      source,
-      '--include-anilist-manga',
-      '--query',
-      keyword,
-      '-j',
-    ]);
+    const { stdout, escapedCommand } = await execa('mangal', ['inline', '--source', source, '--query', keyword, '-j']);
     logger.info(`Search manga with following command: ${escapedCommand}`);
     return JSON.parse(stdout);
   } catch (err) {
@@ -225,7 +211,6 @@ export const getMangaMetadata = async (source: string, title: string): Promise<M
       'inline',
       '--source',
       source,
-      '--include-anilist-manga',
       '--query',
       title,
       '--manga',
@@ -250,7 +235,6 @@ export const getMangaDetail = async (source: string, title: string): Promise<Man
       'inline',
       '--source',
       source,
-      '--include-anilist-manga',
       '--query',
       title,
       '--manga',
