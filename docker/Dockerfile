@@ -85,4 +85,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY docker/mangal /mangal
 COPY docker/root/ /
 
+RUN chmod +x /etc/services.d/kaizoku/run
+
 VOLUME [ "/logs", "/config", "/data" ]
