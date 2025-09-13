@@ -50,7 +50,7 @@ export const scanLibrary = async () => {
       Accept: 'application/json',
     };
 
-    const kavitaLibrariesUrl = new URL('/api/Library', baseKavitaUrl).href;
+    const kavitaLibrariesUrl = new URL('/api/Library/libraries', baseKavitaUrl).href;
 
     const libraries: Library[] = await (
       await fetch(kavitaLibrariesUrl, {
@@ -90,7 +90,7 @@ export const refreshMetadata = async (mangaName: string) => {
       Accept: 'application/json',
     };
 
-    const kavitaSeriesUrl = new URL('/api/Series', baseKavitaUrl).href;
+    const kavitaSeriesUrl = new URL('/api/Series/v2', baseKavitaUrl).href;
 
     const series: Series[] = await (
       await fetch(kavitaSeriesUrl, {
