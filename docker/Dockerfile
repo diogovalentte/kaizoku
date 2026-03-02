@@ -55,13 +55,13 @@ WORKDIR /tmp
 
 RUN \
   if [ "$(uname -m)" = "x86_64" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-1/mangal_4.0.6-1_linux_amd64.tar.gz" -o mangal.tar.gz ;\
+  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-2/mangal_4.0.6-2_linux_amd64.tar.gz" -o mangal.tar.gz ;\
   elif [ "$(uname -m)" = "armv6l" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-1/mangal_4.0.6-1_linux_armv6.tar.gz" -o mangal.tar.gz ;\
+  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-2/mangal_4.0.6-2_linux_armv6.tar.gz" -o mangal.tar.gz ;\
   elif [ "$(uname -m)" = "i386" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-1/mangal_4.0.6-1_linux_386.tar.gz" -o mangal.tar.gz ;\
+  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-2/mangal_4.0.6-2_linux_386.tar.gz" -o mangal.tar.gz ;\
   elif [ "$(uname -m)" = "aarch64" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-1/mangal_4.0.6-1_linux_arm64.tar.gz" -o mangal.tar.gz ;\
+  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-2/mangal_4.0.6-2_linux_arm64.tar.gz" -o mangal.tar.gz ;\
   fi
 RUN tar xf mangal.tar.gz
 RUN mv mangal /usr/bin/mangal
