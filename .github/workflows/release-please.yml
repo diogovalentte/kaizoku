@@ -2,6 +2,13 @@ on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
+    inputs:
+      mangal_version:
+        description: "mangal release tag (e.g., 'v4.0.6-3'). Defaults to the latest release"
+        required: false
+  repository_dispatch:
+    types: [mangal-release]
 
 env:
   REGISTRY: ghcr.io
@@ -67,11 +74,24 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_TOKEN }}
 
+      - name: Resolve mangal version
+        id: mangal
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DISPATCH_VERSION: ${{ github.event.client_payload.mangal_version || inputs.mangal_version }}
+        run: |
+          VERSION="${DISPATCH_VERSION:-$(gh release view --repo ${{ github.repository_owner }}/mangal --json tagName -q .tagName)}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest
+            type=raw,value=mangal-${{ steps.mangal.outputs.version }}
 
       - name: Cache Docker layers
         uses: actions/cache@v3
@@ -91,6 +111,7 @@ jobs:
           provenance: false
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: MANGAL_VERSION=${{ steps.mangal.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -98,3 +119,20 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Send GitHub webhook
+        env:
+          WEBHOOK_SERVER: ${{ secrets.WEBHOOK_SERVER }}
+          WEBHOOK_SERVER_SECRET: ${{ secrets.WEBHOOK_SERVER_SECRET }}
+          EVENT: push
+          PAYLOAD_FILE: payload.json
+        run: |
+          echo "{\"repository\": {\"name\": \"${GITHUB_REPOSITORY##*/}\"}}" > "$PAYLOAD_FILE"
+          SIG="sha256=$(openssl dgst -sha256 -hmac "$WEBHOOK_SERVER_SECRET" "$PAYLOAD_FILE" | sed 's/^.* //')"
+          DELIVERY_ID=$(uuidgen)
+          curl -fsS -X POST "$WEBHOOK_SERVER" \
+            -H "Content-Type: application/json" \
+            -H "X-Hub-Signature-256: $SIG" \
+            -H "X-GitHub-Event: $EVENT" \
+            -H "X-GitHub-Delivery: $DELIVERY_ID" \
+            --data-binary "@$PAYLOAD_FILE"

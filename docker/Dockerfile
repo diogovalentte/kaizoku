@@ -53,16 +53,19 @@ FROM base as runner
 
 WORKDIR /tmp
 
+ARG MANGAL_VERSION=v4.0.6-3
+
 RUN \
   if [ "$(uname -m)" = "x86_64" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-3/mangal_4.0.6-3_linux_amd64.tar.gz" -o mangal.tar.gz ;\
+  MANGAL_ARCH=amd64 ;\
   elif [ "$(uname -m)" = "armv6l" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-3/mangal_4.0.6-3_linux_armv6.tar.gz" -o mangal.tar.gz ;\
+  MANGAL_ARCH=armv6 ;\
   elif [ "$(uname -m)" = "i386" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-3/mangal_4.0.6-3_linux_386.tar.gz" -o mangal.tar.gz ;\
+  MANGAL_ARCH=386 ;\
   elif [ "$(uname -m)" = "aarch64" ] ; then \
-  curl -L "https://github.com/diogovalentte/mangal/releases/download/v4.0.6-3/mangal_4.0.6-3_linux_arm64.tar.gz" -o mangal.tar.gz ;\
-  fi
+  MANGAL_ARCH=arm64 ;\
+  fi && \
+  curl -fL "https://github.com/diogovalentte/mangal/releases/download/${MANGAL_VERSION}/mangal_${MANGAL_VERSION#v}_linux_${MANGAL_ARCH}.tar.gz" -o mangal.tar.gz
 RUN tar xf mangal.tar.gz
 RUN mv mangal /usr/bin/mangal
 RUN chmod +x /usr/bin/mangal
