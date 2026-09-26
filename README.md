@@ -8,7 +8,7 @@ This is a fork of [oae/kaizoku](https://github.com/oae/kaizoku), which is archiv
 
 ### Image
 
-- The image is published to `ghcr.io/diogovalentte/kaizoku` instead of Docker Hub and `ghcr.io/oae/kaizoku`. To use it, set `image: ghcr.io/diogovalentte/kaizoku:latest` in the docker-compose file below.
+- The image is published to `ghcr.io/diogovalentte/kaizoku` instead of Docker Hub and `ghcr.io/oae/kaizoku`. The docker-compose file below already uses it.
 - Each build is tagged `latest`, `mangal-<mangal version>` and, when built from a git tag, the tag name (e.g. `v1.6.1.6`).
 - The multi-arch build (`linux/amd64`, `linux/arm64`) is kept, but with `provenance: false`.
 
@@ -61,7 +61,7 @@ volumes:
 services:
   app:
     container_name: kaizoku
-    image: ghcr.io/oae/kaizoku:latest
+    image: ghcr.io/diogovalentte/kaizoku:latest
     environment:
       - DATABASE_URL=postgresql://kaizoku:kaizoku@db:5432/kaizoku
       - KAIZOKU_PORT=3000
@@ -111,7 +111,7 @@ services:
 ### Start the Kaizoku
 
 ```bash
-git clone https://github.com/oae/kaizoku.git
+git clone https://github.com/diogovalentte/kaizoku.git
 cd ./kaizoku/
 cp .env.example .env
 pnpm i
